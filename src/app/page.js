@@ -1,100 +1,134 @@
-import Image from "next/image";
+"use client";
+import { useState, useRef, useEffect } from 'react';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [message, setMessage] = useState('');
+  const [context, setContext] = useState('');
+  const [chat, setChat] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const chatContainerRef = useRef(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  // Auto-scroll to bottom when a new message is added
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chat]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    setLoading(true);
+    setChat((prev) => [...prev, { type: 'user', content: message }]);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, context }),
+      });
+
+      const data = await response.json();
+      setChat((prev) => [...prev, { type: 'bot', content: data.message }]);
+    } catch (error) {
+      console.error('Error:', error);
+      setChat((prev) => [
+        ...prev,
+        { type: 'bot', content: 'Sorry, I encountered an error.' },
+      ]);
+    }
+
+    setLoading(false);
+    setMessage('');
+  };
+
+  const handleClearChat = () => {
+    setChat([]);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 py-6 flex flex-col">
+      {/* Header */}
+      <header className="text-center py-4">
+        <h1 className="text-4xl font-bold text-gray-800 animate-bounce">
+          Chat with AI
+        </h1>
+      </header>
+
+      {/* Main Chat Container */}
+      <main className="flex-grow container mx-auto px-4 sm:px-0">
+        <div className="bg-white shadow-xl rounded-3xl p-6">
+          {/* Context Input */}
+          <div className="mb-4">
+            <textarea
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+              rows="3"
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              placeholder="Paste your document context here..."
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          {/* Chat Messages */}
+          <div
+            ref={chatContainerRef}
+            className="chat-container h-80 overflow-y-auto mb-4 p-4 border rounded bg-gray-50"
           >
-            Read our docs
-          </a>
+            {chat.length === 0 ? (
+              <p className="text-center text-gray-500">
+                Your chat will appear here...
+              </p>
+            ) : (
+              chat.map((entry, index) => (
+                <div
+                  key={index}
+                  className={`mb-4 p-3 rounded transition transform hover:scale-105 ${
+                    entry.type === 'user'
+                      ? 'bg-blue-100 text-right self-end max-w-[80%]'
+                      : 'bg-gray-200 text-left self-start max-w-[80%]'
+                  }`}
+                >
+                  {entry.content}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Input and Buttons */}
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            <form onSubmit={handleSubmit} className="flex flex-grow gap-2 w-full">
+              <input
+                type="text"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="flex-grow p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                placeholder="Type your message..."
+                disabled={loading}
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition disabled:bg-blue-300"
+              >
+                {loading ? 'Sending...' : 'Send'}
+              </button>
+            </form>
+            <button
+              onClick={handleClearChat}
+              className="bg-red-500 text-white px-4 py-3 rounded hover:bg-red-600 transition"
+            >
+              Clear Chat
+            </button>
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      {/* Footer */}
+      <footer className="text-center py-4">
+        <p className="text-gray-600">
+          © 2025 AI Chat Application. All rights reserved.
+        </p>
       </footer>
     </div>
   );

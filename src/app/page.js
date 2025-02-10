@@ -51,7 +51,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 py-6 flex flex-col">
       {/* Header */}
       <header className="text-center py-4">
-        <h1 className="text-4xl font-bold text-gray-800 animate-bounce">
+        <h1 className="text-4xl font-bold text-black animate-bounce">
           Chat with AI
         </h1>
       </header>
@@ -62,7 +62,7 @@ export default function Home() {
           {/* Context Input */}
           <div className="mb-4">
             <textarea
-              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-black"
               rows="3"
               value={context}
               onChange={(e) => setContext(e.target.value)}
@@ -83,7 +83,7 @@ export default function Home() {
               chat.map((entry, index) => (
                 <div
                   key={index}
-                  className={`mb-4 p-3 rounded transition transform hover:scale-105 ${
+                  className={`mb-4 p-3 rounded transition transform hover:scale-105 text-black ${
                     entry.type === 'user'
                       ? 'bg-blue-100 text-right self-end max-w-[80%]'
                       : 'bg-gray-200 text-left self-start max-w-[80%]'
@@ -102,7 +102,7 @@ export default function Home() {
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="flex-grow p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                className="flex-grow p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-black"
                 placeholder="Type your message..."
                 disabled={loading}
               />
@@ -126,7 +126,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="text-center py-4">
-        <p className="text-gray-600">
+        <p className="text-black">
           © 2025 AI Chat Application. All rights reserved.
         </p>
       </footer>
